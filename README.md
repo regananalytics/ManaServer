@@ -1,2 +1,2 @@
-# ManaServer
- Configurable game memory reader and server
+# MemCore
+ Configurable game memory reader library built on ProcessMemory
