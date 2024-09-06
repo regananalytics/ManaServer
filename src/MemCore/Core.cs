@@ -13,10 +13,13 @@ namespace MemCore
         public Dictionary<string, List<Pointer>> ReplicaPointers { get; set; } = new Dictionary<string, List<Pointer>>();
         public Dictionary<string, ProcessPointer> ProcessPointers { get; set; } = new Dictionary<string, ProcessPointer>();
 
-        public MemoryCore(string gameName, bool dryRun = false)
+        public MemoryCore(string gameConfDir, bool dryRun = false)
         {
             // Load Config
-            GameConfFile = @".\config\" + gameName + ".yaml";
+            if (gameConfDir.EndsWith(".yaml"))
+                GameConfFile = gameConfDir;
+            else
+                GameConfFile = gameConfDir + "mem.yaml";
             string gameConf = File.ReadAllText(GameConfFile);
 
             // Parse Config
