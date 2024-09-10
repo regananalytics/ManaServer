@@ -17,11 +17,12 @@ namespace MemCore
 
         public int Interval = 1000;
 
-        public MemQServer(string address, Func<string> getMessage, bool verbose = true)
+        public MemQServer(string address, Func<string> getMessage, int interval = 1000, bool verbose = true)
         {
-            _verbose = verbose;
             _address = address;
             _getMessage = getMessage;
+            Interval = interval;
+            _verbose = verbose;
             _cancellationTokenSource = new CancellationTokenSource();
             _socket = new PublisherSocket();
         }
@@ -46,7 +47,8 @@ namespace MemCore
 
                 _socket.SendFrame(message);
                 if (_verbose)
-                    Console.WriteLine(message.ToString());
+                    Console.Clear();
+                    Console.Write("State Output:\n" + message.ToString());
 
                 await Task.Delay(Interval, cancellationToken);
             }
