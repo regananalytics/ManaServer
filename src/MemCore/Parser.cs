@@ -67,6 +67,7 @@ namespace MemCore
         public static Dictionary<string, string> TypeDictionary = new Dictionary<string, string>
     {
       { "byte", "System.Byte" },
+      { "short", "System.Int16" },
       { "int", "System.Int32" },
       { "long", "System.Int64" },
       { "float", "System.Single" },
@@ -87,10 +88,13 @@ namespace MemCore
             MemoryHandler = new ProcessMemoryHandler(Process.Id);
 
             var baseAddress = NativeWrappers.GetProcessBaseAddress(Process.Id, PInvoke.ListModules.LIST_MODULES_64BIT);
+            if (baseAddress == 0)
+                baseAddress = Process.MainModule.BaseAddress;
 
             if (Levels != null)
             {
-                var levelOffsets = Levels.Select(x => x).ToArray();
+                // long[] levelOffsets = Levels.Select(x => (long)x).ToArray();
+                int[] levelOffsets = Levels.Select(x => x).ToArray();
                 MLPointer = new MultilevelPointer(MemoryHandler, IntPtr.Add(baseAddress, BaseAddress), levelOffsets);
             }
             else
@@ -126,6 +130,8 @@ namespace MemCore
                 return MLPointer.DerefByte(offset_not_null);
             else if (Type == typeof(int))
                 return MLPointer.DerefInt(offset_not_null);
+            else if (Type == typeof(short))
+                return MLPointer.DerefShort(offset_not_null);
             else if (Type == typeof(long))
                 return MLPointer.DerefLong(offset_not_null);
             else if (Type == typeof(float))
