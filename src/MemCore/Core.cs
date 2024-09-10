@@ -29,7 +29,7 @@ namespace MemCore
             // Open Process
             var process = Process.GetProcessesByName(Config.GameExe)?.FirstOrDefault();
             if (!dryRun && process == null)
-                throw new System.Exception("Process not found");
+                throw new InvalidOperationException("Process not found");
 
             // Determine Game Version
             GameVersion gameVersion;
@@ -59,12 +59,13 @@ namespace MemCore
                 {
                     // Relative Address
                     var bp = BasePointers[sp.Address];
-                    if (bp.Levels != null)
-                        if (sp.Levels != null)
+                    if (sp.Levels != null)
+                        if (bp.Levels != null)
                             throw new System.Exception(
                                 "Relative Address with BasePointer and StatePointer Levels not supported yet"
                               );
-                    sp.Levels = bp.Levels;
+                    else if (bp.Levels != null)
+                        sp.Levels = bp.Levels; // Use BP Levels
                     sp.Address = "0x" + (bp.BaseAddress + bp.Offset).ToString("X");
                 }
 
