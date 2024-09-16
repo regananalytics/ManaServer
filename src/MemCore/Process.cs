@@ -1,16 +1,19 @@
+// Adapted from ProcessMemory ProcessMemHandler.cs
+// See included license note LICENSE.ProcessMemory
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using static ProcessMemory.PInvoke;
+using static MemCore.PInvoke;
 
 namespace MemCore
 {
-    public unsafe class MemoryHandler : IDisposable
+    public unsafe class MemHandler : IDisposable
     {
         private const int STILL_ACTIVE = 259;
         public readonly IntPtr ProcessHandle = IntPtr.Zero;
         
-        public MemoryHandler(int pid, bool readOnly = true)
+        public MemHandler(int pid, bool readOnly = true)
         {
             var accessFlags = readOnly 
                 ? ProcessAccessFlags.QueryInformation | ProcessAccessFlags.VirtualMemoryRead 
@@ -29,7 +32,7 @@ namespace MemCore
             }
         }
 
-        public bool ProcessExitCode
+        public int ProcessExitCode
         {
             get
             {
@@ -67,27 +70,44 @@ namespace MemCore
         }
 
         // Generic
-        public bool TryGetAt<T>(IntPtr offset, ref T value) where T : unmanaged
+        public bool TryGetAt<T>(IntPtr address, ref T value) where T : unmanaged
         {
             fixed (T* pointer = &value)
-                return ReadProcessMemory(ProcessHandle, offset, pointer, sizeof(T), out IntPtr bytesRead);
+                return ReadProcessMemory(ProcessHandle, address, pointer, sizeof(T), out IntPtr bytesRead);
         }
-        public bool TryGetAt<T>(int* offset, ref T value) where T : unmanaged
+        public bool TryGetAt<T>(int* address, ref T value) where T : unmanaged
         {
             fixed (T* pointer = &value)
-                return ReadProcessMemory(ProcessHandle, offset, pointer, sizeof(T), out IntPtr bytesRead);
+                return ReadProcessMemory(ProcessHandle, address, pointer, sizeof(T), out IntPtr bytesRead);
         }
 
-        public bool TrySetAt<T>(IntPtr offset, ref T value) where T : unmanaged
+        public bool TrySetAt<T>(IntPtr address, ref T value) where T : unmanaged
         {
             fixed (T* pointer = &value)
-                return WriteProcessMemory(ProcessHandle, offset, pointer, sizeof(T), out IntPtr bytesRead);
+                return WriteProcessMemory(ProcessHandle, address, pointer, sizeof(T), out IntPtr bytesRead);
         }
-        public bool TrySetAt<T>(int* offset, ref T value) where T : unmanaged
+        public bool TrySetAt<T>(int* address, ref T value) where T : unmanaged
         {
             fixed (T* pointer = &value)
-                return WriteProcessMemory(ProcessHandle, offset, pointer, sizeof(T), out IntPtr bytesRead);
+                return WriteProcessMemory(ProcessHandle, address, pointer, sizeof(T), out IntPtr bytesRead);
         }
+
+        // SByte
+        public bool TryGetSByteAt(IntPtr address, ref sbyte result) => TryGetAt(address, ref result);
+        public bool TryGetSByteAt(IntPtr address, sbyte* result) => TryGetAt(address, ref *result);
+        public bool TryGetSByteAt(int* address, sbyte* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetSByteAt(IntPtr address, ref sbyte value) => TrySetAt(address, ref value);
+        public bool TrySetSByteAt(int* address, ref sbyte value) => TrySetAt(address, ref value);
+
+        // Byte
+        public bool TryGetByteAt(IntPtr address, ref byte result) => TryGetAt(address, ref result);
+        public bool TryGetByteAt(IntPtr address, byte* result) => TryGetAt(address, ref *result);
+        public bool TryGetByteAt(int* address, byte* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetByteAt(IntPtr address, ref byte value) => TrySetAt(address, ref value);
+        public bool TrySetByteAt(int* address, ref byte value) => TrySetAt(address, ref value);
+
 
         // Byte Array
         public bool TryGetByteArrayAt(IntPtr offset, int size, IntPtr result)
@@ -107,5 +127,105 @@ namespace MemCore
             => WriteProcessMemory(ProcessHandle, offset, result, size, out IntPtr _);
         public bool TrySetByteArrayAt(int* offset, int size, void* result)
             => TrySetByteArrayAt((IntPtr)offset, size, result);
+
+        // Short
+        public bool TryGetShortAt(IntPtr address, ref short result) => TryGetAt(address, ref result);
+        public bool TryGetShortAt(IntPtr address, short* result) => TryGetAt(address, ref *result);
+        public bool TryGetShortAt(int* address, short* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetShortAt(IntPtr address, ref short value) => TrySetAt(address, ref value);
+        public bool TrySetShortAt(int* address, ref short value) => TrySetAt(address, ref value);
+
+        // UShort
+        public bool TryGetUShortAt(IntPtr address, ref ushort result) => TryGetAt(address, ref result);
+        public bool TryGetUShortAt(IntPtr address, ushort* result) => TryGetAt(address, ref *result);
+        public bool TryGetUShortAt(int* address, ushort* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetUShortAt(IntPtr address, ref ushort value) => TrySetAt(address, ref value);
+        public bool TrySetUShortAt(int* address, ref ushort value) => TrySetAt(address, ref value);
+
+        // Int
+        public bool TryGetIntAt(IntPtr address, ref int result) => TryGetAt(address, ref result);
+        public bool TryGetIntAt(IntPtr address, int* result) => TryGetAt(address, ref *result);
+        public bool TryGetIntAt(int* address, int* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetIntAt(IntPtr address, ref int value) => TrySetAt(address, ref value);
+        public bool TrySetIntAt(int* address, ref int value) => TrySetAt(address, ref value);
+
+        // UInt
+        public bool TryGetUIntAt(IntPtr address, ref uint result) => TryGetAt(address, ref result);
+        public bool TryGetUIntAt(IntPtr address, uint* result) => TryGetAt(address, ref *result);
+        public bool TryGetUIntAt(int* address, uint* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetUIntAt(IntPtr address, ref uint value) => TrySetAt(address, ref value);
+        public bool TrySetUIntAt(int* address, ref uint value) => TrySetAt(address, ref value);
+
+        // Long
+        public bool TryGetLongAt(IntPtr address, ref long result) => TryGetAt(address, ref result);
+        public bool TryGetLongAt(IntPtr address, long* result) => TryGetAt(address, ref *result);
+        public bool TryGetLongAt(int* address, long* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetLongAt(IntPtr address, ref long value) => TrySetAt(address, ref value);
+        public bool TrySetLongAt(int* address, ref long value) => TrySetAt(address, ref value);
+
+        // ULong
+        public bool TryGetULongAt(IntPtr address, ref ulong result) => TryGetAt(address, ref result);
+        public bool TryGetULongAt(IntPtr address, ulong* result) => TryGetAt(address, ref *result);
+        public bool TryGetULongAt(int* address, ulong* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetULongAt(IntPtr address, ref ulong value) => TrySetAt(address, ref value);
+        public bool TrySetULongAt(int* address, ref ulong value) => TrySetAt(address, ref value);
+
+        // Float
+        public bool TryGetFloatAt(IntPtr address, ref float result) => TryGetAt(address, ref result);
+        public bool TryGetFloatAt(IntPtr address, float* result) => TryGetAt(address, ref *result);
+        public bool TryGetFloatAt(int* address, float* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetFloatAt(IntPtr address, ref float value) => TrySetAt(address, ref value);
+        public bool TrySetFloatAt(int* address, ref float value) => TrySetAt(address, ref value);
+
+        // Double
+        public bool TryGetDoubleAt(IntPtr address, ref double result) => TryGetAt(address, ref result);
+        public bool TryGetDoubleAt(IntPtr address, double* result) => TryGetAt(address, ref *result);
+        public bool TryGetDoubleAt(int* address, double* result) => TryGetAt(address, ref *result);
+        
+        public bool TrySetDoubleAt(IntPtr address, ref double value) => TrySetAt(address, ref value);
+        public bool TrySetDoubleAt(int* address, ref double value) => TrySetAt(address, ref value);
+
+        // Unicode
+        // public bool TryGetUnicodeStringAt(IntPtr address, int size, ref long result)
+        // {
+        //     Span<byte> stringSpan = new byte[size];
+        //     fixed(byte* bp = stringSpan)
+        //         if (TryGetByteArrayAt(address, size, bp))
+        //         {
+        //             result = stringSpan.FromUnicodeBytes();
+        //             return true;
+        //         }
+        //     return false;
+        // }
+        // public bool TryGetUnicodeStringAt(int* address, int size, ref string result) 
+        //     => TryGetUnicodeStringAt((IntPtr)address, size, ref result);
+
+        // ASCII
+        // public bool TryGetASCIIStringAt(IntPtr address, ref long result)
+        // {
+        //     Span<byte> stringSpan = new byte[size];
+        //     fixed(byte* bp = stringSpan)
+        //         if (TryGetByteArrayAt(address, size, bp))
+        //         {
+        //             result = stringSpan.FromASCIIBytes();
+        //             return true;
+        //         }
+        //     return false;
+        // }
+        // public bool TryGetASCIIStringAt(int* address, int size, ref string result) 
+        //     => TryGetASCIIStringAt((IntPtr)address, size, ref result);
+
+        // IDisposable
+        #region IDisposable Support
+        protected virtual void Dispose(bool disposing) => CloseHandle(ProcessHandle);
+        public void Dispose() => Dispose(true);
+        #endregion
     }
 }

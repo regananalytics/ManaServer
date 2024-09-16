@@ -1,4 +1,3 @@
-using ProcessMemory;
 using System.Diagnostics;
 using YamlDotNet.Serialization;
 
@@ -79,13 +78,13 @@ namespace MemCore
     public class ProcessPointer : Pointer
     {
         public Process Process { get; set; }
-        public ProcessMemoryHandler MemoryHandler { get; set; }
-        public MultilevelPointer MLPointer { get; set; }
+        public MemHandler MemHandler { get; set; }
+        public MemPointer MemPointer { get; set; }
 
         public ProcessPointer(Pointer pointer, Process process) : base(pointer.Name, pointer.Description, pointer.BaseAddress, pointer.Levels, pointer.Offset, pointer.Type, pointer.Default)
         {
             Process = process;
-            MemoryHandler = new ProcessMemoryHandler(Process.Id);
+            MemHandler = new MemHandler(Process.Id);
 
             var baseAddress = NativeWrappers.GetProcessBaseAddress(Process.Id, PInvoke.ListModules.LIST_MODULES_64BIT);
             if (baseAddress == 0)
@@ -95,52 +94,106 @@ namespace MemCore
             {
                 // long[] levelOffsets = Levels.Select(x => (long)x).ToArray();
                 int[] levelOffsets = Levels.Select(x => x).ToArray();
-                MLPointer = new MultilevelPointer(MemoryHandler, IntPtr.Add(baseAddress, BaseAddress), levelOffsets);
+                MemPointer = new MemPointer(MemHandler, IntPtr.Add(baseAddress, BaseAddress), levelOffsets);
             }
             else
             {
-                MLPointer = new MultilevelPointer(MemoryHandler, IntPtr.Add(baseAddress, BaseAddress));
+                MemPointer = new MemPointer(MemHandler, IntPtr.Add(baseAddress, BaseAddress));
             }
         }
 
         public void Update()
         {
-            MLPointer?.UpdatePointers();
+            MemPointer?.UpdatePointers();
         }
 
         public object? Deref(int? offset = null)
         {
-            int offset_not_null;
-            if (offset != null)
-                offset_not_null = (int)offset;
-            else
-                offset_not_null = Offset;
+            int offsetNotNull = offset ?? Offset;
 
             // Return default if the pointer is null
-            if (MLPointer == null || MLPointer.IsNullPointer)
+            if (MemPointer == null || MemPointer.IsNullPointer)
                 return Default;
 
-            // Dereference the pointer
-            if (Type == null) // We don't have a type...
-                if (Default != null) // If we have a default we can use that type
-                    Type = Default.GetType();
-                else
-                    throw new ArgumentException($"Type is null and no default value is set for pointer '{Name}'");
-            else if (Type == typeof(Byte))
-                return MLPointer.DerefByte(offset_not_null);
-            else if (Type == typeof(int))
-                return MLPointer.DerefInt(offset_not_null);
-            else if (Type == typeof(short))
-                return MLPointer.DerefShort(offset_not_null);
-            else if (Type == typeof(long))
-                return MLPointer.DerefLong(offset_not_null);
-            else if (Type == typeof(float))
-                return MLPointer.DerefFloat(offset_not_null);
-            else if (Type == typeof(double))
-                return MLPointer.DerefDouble(offset_not_null);
-            else if (Type == typeof(string))
-                return MLPointer.DerefUnicodeString(offset_not_null, 100);
-            throw new ArgumentException($"Invalid type '{Type.Name}'");
+            // Ensure Type is set, use Default's type if available
+            Type ??= Default?.GetType() ?? throw new ArgumentException($"Type is null and no default value is set for pointer '{Name}'");
+
+            // Map the types to deref functions
+            switch (Type)
+            {
+                case Type t when t == typeof(sbyte):
+                {
+                    sbyte value = 0;
+                    if (MemPointer.TryDerefSByte(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(byte):
+                {
+                    byte value = 0;
+                    if (MemPointer.TryDerefByte(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(short):
+                {
+                    short value = 0;
+                    if (MemPointer.TryDerefShort(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(ushort):
+                {
+                    ushort value = 0;
+                    if (MemPointer.TryDerefUShort(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(int):
+                {
+                    int value = 0;
+                    if (MemPointer.TryDerefInt(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(uint):
+                {
+                    uint value = 0;
+                    if (MemPointer.TryDerefUInt(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(long):
+                {
+                    long value = 0;
+                    if (MemPointer.TryDerefLong(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(ulong):
+                {
+                    ulong value = 0;
+                    if (MemPointer.TryDerefULong(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(float):
+                {
+                    float value = 0;
+                    if (MemPointer.TryDerefFloat(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                case Type t when t == typeof(double):
+                {
+                    double value = 0;
+                    if (MemPointer.TryDerefDouble(offsetNotNull, ref value))
+                        return value;
+                    return Default;
+                }
+                default:
+                    throw new ArgumentException($"Invalid type '{Type.Name}'");
+            }
         }
     }
 }

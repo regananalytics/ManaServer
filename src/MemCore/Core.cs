@@ -175,7 +175,7 @@ namespace MemCore
                     proc = sp.AttachProcess(process);
                 else
                     proc = null;
-                ProcessPointers.Add(sp.Name, proc);
+                ProcessPointers.Add(sp.Name, proc!);
             }
         }
 
